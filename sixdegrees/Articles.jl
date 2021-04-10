@@ -17,7 +17,7 @@ end
 
 function find(url) :: Vector{Article}
   articles = Article[]
-  
+
   result = MySQL.query(CONN, "SELECT * FROM `articles` WHERE url = '$url'")
 
   isempty(result.url) && return articles
@@ -36,8 +36,8 @@ end
 function save(a::Article)
   sql = "INSERT IGNORE INTO articles
             (title, content, links, image, url) VALUES (?, ?, ?, ?, ?)"
-  stmt = MySQL.Stmt(CONN, sql)
-  result = MySQL.execute!(stmt,
+  stmt = DBInterface.prepare(CONN, sql)
+  result = DBInterface.execute!(stmt,
                           [ a.title,
                             a.content,
                             JSON.json(a.links),
@@ -58,7 +58,7 @@ function createtable()
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8
   """
 
-  MySQL.execute!(CONN, sql)
+  DBInterface.execute!(CONN, sql)
 end
 
 end
