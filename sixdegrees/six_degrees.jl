@@ -1,6 +1,3 @@
-using Pkg
-pkg"activate ."
-
 include("Database.jl")
 include("Wikipedia.jl")
 include("Gameplay.jl")

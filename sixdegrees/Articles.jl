@@ -2,7 +2,7 @@ module Articles
 
 export Article, save, find
 
-using ...Database, MySQL, JSON
+using ...Database, MySQL, JSON, Tables
 
 struct Article
   content::String
@@ -18,16 +18,14 @@ end
 function find(url) :: Vector{Article}
   articles = Article[]
 
-  result = MySQL.query(CONN, "SELECT * FROM `articles` WHERE url = '$url'")
+  result = DBInterface.execute(CONN, "SELECT content, title, image, url, links FROM `articles` WHERE url = '$url'")
 
-  isempty(result.url) && return articles
-
-  for i in eachindex(result.url)
-    push!(articles, Article(result.content[i],
-                            JSON.parse(result.links[i]),
-                            result.title[i],
-                            result.image[i],
-                            result.url[i]))
+  for row in Tables.rows(result)
+    push!(articles, Article(Tables.getcolumn(row, 1),
+                            Tables.getcolumn(row, 2),
+                            Tables.getcolumn(row, 3),
+                            Tables.getcolumn(row, 4),
+                            JSON.parse(Tables.getcolumn(row, 5))))
   end
 
   articles
@@ -37,7 +35,7 @@ function save(a::Article)
   sql = "INSERT IGNORE INTO articles
             (title, content, links, image, url) VALUES (?, ?, ?, ?, ?)"
   stmt = DBInterface.prepare(CONN, sql)
-  result = DBInterface.execute!(stmt,
+  result = DBInterface.execute(stmt,
                           [ a.title,
                             a.content,
                             JSON.json(a.links),
@@ -58,7 +56,7 @@ function createtable()
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8
   """
 
-  DBInterface.execute!(CONN, sql)
+  DBInterface.execute(CONN, sql)
 end
 
 end
